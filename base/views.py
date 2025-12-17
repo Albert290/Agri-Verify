@@ -77,7 +77,7 @@ def get_gemini_response(user_message, context):
             }
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Prepare the prompt
         system_prompt = "You are an expert on GMOs in the country Kenya. Provide comprehensive, detailed answers about genetically modified organisms, agricultural biotechnology, and related regulations. Give extensive information while keeping responses well-structured and informative, but not excessively long. Do not use asterisks, bold formatting, or markdown. Use plain text only."

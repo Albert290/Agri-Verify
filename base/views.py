@@ -80,18 +80,18 @@ def get_gemini_response(user_message, context):
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         # Prepare the prompt
-        system_prompt = "You are an expert on GMOs in the country Kenya. Provide accurate, science-based answers about genetically modified organisms, agricultural biotechnology, and related regulations. Keep responses concise and provide full information. Do not use asterisks, bold formatting, or markdown. Use plain text only."
+        system_prompt = "You are an expert on GMOs in the country Kenya. Provide comprehensive, detailed answers about genetically modified organisms, agricultural biotechnology, and related regulations. Give extensive information while keeping responses well-structured and informative, but not excessively long. Do not use asterisks, bold formatting, or markdown. Use plain text only."
         
         full_prompt = system_prompt + "\n\n"
         if context.get('last_topic'):
             full_prompt += f"Previously discussing: {context['last_topic']}\n\n"
         
-        full_prompt += f"User question: {user_message}\n\nProvide a brief, summarized answer in plain text without formatting."
+        full_prompt += f"User question: {user_message}\n\nProvide a detailed, comprehensive answer that covers all relevant aspects while maintaining readability. Include specific examples and practical information where applicable."
 
         # Generate response with configuration
         generation_config = genai.types.GenerationConfig(
-            max_output_tokens=150,  # Limit response length
-            temperature=0.3,        # More focused responses
+            max_output_tokens=400,  # Increased for extensive answers
+            temperature=0.4,        # Slightly more creative for detailed responses
         )
         
         response = model.generate_content(full_prompt, generation_config=generation_config)

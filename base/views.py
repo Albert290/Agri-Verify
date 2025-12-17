@@ -80,7 +80,7 @@ def get_gemini_response(user_message, context):
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         # Prepare the prompt
-        system_prompt = "You are an expert on GMOs in the country Kenya. Provide brief, accurate, science-based answers about genetically modified organisms, agricultural biotechnology, and related regulations. Keep responses concise (2-3 sentences maximum). Do not use asterisks, bold formatting, or markdown. Use plain text only."
+        system_prompt = "You are an expert on GMOs in the country Kenya. Provide accurate, science-based answers about genetically modified organisms, agricultural biotechnology, and related regulations. Keep responses concise and provide full information. Do not use asterisks, bold formatting, or markdown. Use plain text only."
         
         full_prompt = system_prompt + "\n\n"
         if context.get('last_topic'):

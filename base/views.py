@@ -90,7 +90,7 @@ def get_gemini_response(user_message, context):
 
         # Generate response with configuration
         generation_config = genai.types.GenerationConfig(
-            max_output_tokens=400,  # Increased for extensive answers
+            max_output_tokens=2000,  # Increased for extensive answers
             temperature=0.4,        # Slightly more creative for detailed responses
         )
         

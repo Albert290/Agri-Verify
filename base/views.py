@@ -13,7 +13,9 @@ from .models import *
 from django.views.decorators.csrf import csrf_exempt
 import openai
 from django.views.generic import DetailView
-import requests  
+import requests
+import os
+import google.generativeai as genai  
 
 
 
@@ -57,49 +59,45 @@ def dashboard(request):
     }
     return render(request, 'dashboard.html', context)
 
-def get_grok_response(user_message, context):
+def get_gemini_response(user_message, context):
     """
-    Get a response from Grok's API (JSON-safe format).
+    Get a response from Gemini API (JSON-safe format).
     """
     try:
-        # Prepare messages for the API
-        messages = [
-            {"role": "system", "content": "You are an expert on GMOs. Provide accurate, science-based answers about genetically modified organisms, agricultural biotechnology, and related regulations."},
-        ]
+        # Load environment variables
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
         
+        # Configure Gemini
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return {
+                "answer": "API key not configured",
+                "context": {},
+                "confidence": 0.1
+            }
+        
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-pro')
+        
+        # Prepare the prompt
+        system_prompt = "You are an expert on GMOs. Provide accurate, science-based answers about genetically modified organisms, agricultural biotechnology, and related regulations."
+        
+        full_prompt = system_prompt + "\n\n"
         if context.get('last_topic'):
-            messages.append({"role": "assistant", "content": f"Previously discussing: {context['last_topic']}"})
+            full_prompt += f"Previously discussing: {context['last_topic']}\n\n"
         
-        messages.append({"role": "user", "content": user_message})
+        full_prompt += f"User question: {user_message}"
 
-        # Call Grok API (replace with actual Grok API endpoint and credentials)
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",  # Verify actual Grok API endpoint
-            headers={
-                "Authorization": "Bearer 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",  # Replace with your Grok API key
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "llama-3.3-70b-versatile",  # Or whatever model name Grok uses
-                "messages": messages,
-                "temperature": 1.9,
-                "max_tokens": 300,
-                "top_p": 0.9,
-            },
-            timeout=15  # Slightly longer timeout for Grok
-        )
+        # Generate response
+        response = model.generate_content(full_prompt)
         
-        # Handle potential API errors
-        response.raise_for_status()
-        response_data = response.json()
-
-        # Safely extract the answer (adjust based on Grok's actual response format)
-        answer = response_data.get("choices", [{}])[0].get("message", {}).get("content", "No answer found.")
+        # Extract the answer
+        answer = response.text if response.text else "No answer generated."
 
         # Update context (ensure all values are JSON-serializable)
         new_context = {
             "last_topic": str(user_message[:50]),  # Truncate to avoid issues
-            "conversation_id": response_data.get("conversation_id", "")  # If Grok provides conversation tracking
         }
 
         return {
@@ -108,12 +106,6 @@ def get_grok_response(user_message, context):
             "confidence": float(0.9)  # Confidence score
         }
 
-    except requests.exceptions.RequestException as e:
-        return {
-            "answer": f"API Connection Error: {str(e)}",
-            "context": {},
-            "confidence": 0.1
-        }
     except Exception as e:
         return {
             "answer": f"Processing Error: {str(e)}",
@@ -137,8 +129,8 @@ def chat_api(request):
             if not user_message:
                 return JsonResponse({"error": "Empty message"}, status=400)
 
-            # Get Grok's response
-            result = get_grok_response(user_message, context)
+            # Get Gemini's response
+            result = get_gemini_response(user_message, context)
 
             # Save to database
             chat_msg = ChatMessage.objects.create(

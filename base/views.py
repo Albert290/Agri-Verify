@@ -11,7 +11,6 @@ from django.contrib.auth.models import User
 from django.http import Http404
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
-import openai
 from django.views.generic import DetailView
 import requests
 import os
@@ -78,19 +77,24 @@ def get_gemini_response(user_message, context):
             }
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         # Prepare the prompt
-        system_prompt = "You are an expert on GMOs. Provide accurate, science-based answers about genetically modified organisms, agricultural biotechnology, and related regulations."
+        system_prompt = "You are an expert on GMOs in the country Kenya. Provide brief, accurate, science-based answers about genetically modified organisms, agricultural biotechnology, and related regulations. Keep responses concise (2-3 sentences maximum). Do not use asterisks, bold formatting, or markdown. Use plain text only."
         
         full_prompt = system_prompt + "\n\n"
         if context.get('last_topic'):
             full_prompt += f"Previously discussing: {context['last_topic']}\n\n"
         
-        full_prompt += f"User question: {user_message}"
+        full_prompt += f"User question: {user_message}\n\nProvide a brief, summarized answer in plain text without formatting."
 
-        # Generate response
-        response = model.generate_content(full_prompt)
+        # Generate response with configuration
+        generation_config = genai.types.GenerationConfig(
+            max_output_tokens=150,  # Limit response length
+            temperature=0.3,        # More focused responses
+        )
+        
+        response = model.generate_content(full_prompt, generation_config=generation_config)
         
         # Extract the answer
         answer = response.text if response.text else "No answer generated."
